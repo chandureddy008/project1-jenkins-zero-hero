@@ -47,7 +47,7 @@ pipeline {
     }
     stage('Update Deployment File') {
         environment {
-            GIT_REPO_NAME = "project-Jenkins-Zero-Hero"
+            GIT_REPO_NAME = "project1-Jenkins-Zero-Hero"
             GIT_USER_NAME = "chandureddy008"
         }
         steps {
