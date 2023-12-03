@@ -54,18 +54,18 @@ pipeline {
                         git config user.email "chanduhpreddy@gmail.com"
                         git config user.name "chandureddy008"
                         BUILD_NUMBER=${BUILD_NUMBER}
-                        sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" java-maven-sonar-argocd-helm-k8s/spring-boot-app-deployment.yml
-                        git add java-maven-sonar-argocd-helm-k8s/spring-boot-app-deployment.yml
-                        git commit -m "Update spring-boot-app-deploymen image to version ${BUILD_NUMBER}"
+                        sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
+                        git add java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
+                        git commit -m "Update deployment image to version ${BUILD_NUMBER}"
                         git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
-                    '''
+                        '''
                 }
             }
         }
         stage('Deploy to Kubernetes') {
             environment {
                 KUBECONFIG_FILE = credentials('kubeconfig')
-                DEPLOYMENT_FILE_PATH = 'java-maven-sonar-argocd-helm-k8s/spring-boot-app-deployment.yml'
+                DEPLOYMENT_FILE_PATH = 'java-maven-sonar-argocd-helm-k8s/deployment.yml'
             }
             steps {
                 script {
