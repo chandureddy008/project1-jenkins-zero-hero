@@ -73,6 +73,7 @@ pipeline {
         }
         stage('Deploy to Kubernetes') {
             environment {
+                PATH = "/usr/local/bin:$PATH"
                 KUBECONFIG_FILE = credentials('kubeconfig')
                 DEPLOYMENT_FILE_PATH = 'java-maven-sonar-argocd-helm-k8s/deployment.yml'
             }
