@@ -8,12 +8,14 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                sh 'echo passed'
+                sh 'echo "Performing Checkout"'
+                // Perform Git checkout if needed
                 // git branch: 'main', url: 'https://github.com/chandureddy008/project1-jenkins-zero-hero.git'
             }
         }
         stage('Build and Test') {
             steps {
+                sh 'echo "Building and Testing"'
                 sh 'ls -ltr'
                 sh 'cd java-maven-sonar-argocd-helm-k8s/spring-boot-app && mvn clean package'
             }
@@ -23,12 +25,12 @@ pipeline {
                 SONAR_URL = "http://3.142.144.59:9000"
             }
             steps {
+                sh 'echo "Running Static Code Analysis"'
                 withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
                     sh 'cd java-maven-sonar-argocd-helm-k8s/spring-boot-app && mvn sonar:sonar -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.host.url=${SONAR_URL}'
                 }
             }
         }
-    
         stage('Build and Push Docker Image') {
             environment {
                 DOCKER_IMAGE = "chandureddy008/ultimate-cicd:${BUILD_NUMBER}"
@@ -36,6 +38,7 @@ pipeline {
             }
             steps {
                 script {
+                    sh 'echo "Building and Pushing Docker Image"'
                     sh 'cd java-maven-sonar-argocd-helm-k8s/spring-boot-app && docker build -t ${DOCKER_IMAGE} .'
                     def dockerImage = docker.image("${DOCKER_IMAGE}")
                     docker.withRegistry('https://index.docker.io/v1/', "docker-cred") {
@@ -51,15 +54,14 @@ pipeline {
             }
             steps {
                 withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
-                    sh '''
-                        git config user.email "chanduhpreddy@gmail.com"
-                        git config user.name "chandureddy008"
-                        BUILD_NUMBER=${BUILD_NUMBER}
-                        sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
-                        git add java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
-                        git commit -m "Update deployment image to version ${BUILD_NUMBER}"
-                        git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
-                    '''
+                    sh 'echo "Updating Deployment File"'
+                    sh 'git config user.email "chanduhpreddy@gmail.com"'
+                    sh 'git config user.name "chandureddy008"'
+                    sh 'BUILD_NUMBER=${BUILD_NUMBER}' // Make sure variable assignment works correctly here
+                    sh 'sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml'
+                    sh 'git add java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml'
+                    sh 'git commit -m "Update deployment image to version ${BUILD_NUMBER}"'
+                    sh 'git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main'
                 }
             }
         }
@@ -70,14 +72,12 @@ pipeline {
             }
             steps {
                 script {
-                              sh 'curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl'
+                    sh 'echo "Deploying to Kubernetes"'
+                    sh 'curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl'
                     sh 'chmod +x ./kubectl'
                     sh './kubectl version --client' // Verify kubectl installation
                     
-                    // Write kubeconfig to a file
                     sh 'echo "$KUBECONFIG_FILE" > kubeconfig.yaml'
-
-                    // Use kubectl to apply the deployment
                     sh './kubectl --kubeconfig=kubeconfig.yaml apply -f $DEPLOYMENT_FILE_PATH'
                 }
             }
