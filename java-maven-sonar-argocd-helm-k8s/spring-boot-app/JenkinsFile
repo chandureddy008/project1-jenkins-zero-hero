@@ -9,7 +9,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 sh 'echo passed'
-                //git branch: 'main', url: 'https://github.com/chandureddy008/project1-jenkins-zero-hero.git'
+                // git branch: 'main', url: 'https://github.com/chandureddy008/project1-jenkins-zero-hero.git'
             }
         }
         stage('Build and Test') {
@@ -25,6 +25,15 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
                     sh 'cd java-maven-sonar-argocd-helm-k8s/spring-boot-app && mvn sonar:sonar -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.host.url=${SONAR_URL}'
+                }
+            }
+        }
+        stage('Build Kubernetes-Ready Image') {
+            steps {
+                script {
+                    sh '''
+                        docker build -t kubectl-enabled-image -f java-maven-sonar-argocd-helm-k8s/spring-boot-app/Dockerfilekubectl .
+                    '''
                 }
             }
         }
@@ -58,7 +67,7 @@ pipeline {
                         git add java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
                         git commit -m "Update deployment image to version ${BUILD_NUMBER}"
                         git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
-                        '''
+                    '''
                 }
             }
         }
