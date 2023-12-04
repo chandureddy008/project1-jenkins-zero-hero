@@ -71,7 +71,7 @@ pipeline {
                 script {
                     sh '''
                         echo "$KUBECONFIG_FILE" > kubeconfig.yaml
-                        kubectl --kubeconfig=kubeconfig.yaml apply -f $DEPLOYMENT_FILE_PATH
+                        /usr/local/bin/kubectl --kubeconfig=kubeconfig.yaml apply -f $DEPLOYMENT_FILE_PATH
                     '''
                 }
             }
