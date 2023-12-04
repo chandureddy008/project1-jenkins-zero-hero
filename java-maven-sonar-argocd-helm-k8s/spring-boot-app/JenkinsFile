@@ -28,15 +28,7 @@ pipeline {
                 }
             }
         }
-        stage('Build Kubernetes-Ready Image') {
-            steps {
-                script {
-                    sh '''
-                        docker build -t kubectl-enabled-image -f java-maven-sonar-argocd-helm-k8s/spring-boot-app/Dockerfilekubectl .
-                    '''
-                }
-            }
-        }
+    
         stage('Build and Push Docker Image') {
             environment {
                 DOCKER_IMAGE = "chandureddy008/ultimate-cicd:${BUILD_NUMBER}"
@@ -78,10 +70,15 @@ pipeline {
             }
             steps {
                 script {
-                    sh '''
-                        echo "$KUBECONFIG_FILE" > kubeconfig.yaml
-                        /usr/local/bin/kubectl --kubeconfig=kubeconfig.yaml apply -f $DEPLOYMENT_FILE_PATH
-                    '''
+                              sh 'curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl'
+                    sh 'chmod +x ./kubectl'
+                    sh './kubectl version --client' // Verify kubectl installation
+                    
+                    // Write kubeconfig to a file
+                    sh 'echo "$KUBECONFIG_FILE" > kubeconfig.yaml'
+
+                    // Use kubectl to apply the deployment
+                    sh './kubectl --kubeconfig=kubeconfig.yaml apply -f $DEPLOYMENT_FILE_PATH'
                 }
             }
         }
